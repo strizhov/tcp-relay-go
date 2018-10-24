@@ -1,0 +1,59 @@
+Generic TCP relay.
+
+The network application that allows two processes (located between the firewall or NAT) communicate directly using TCP protocol.
+
+relay - is the application that route network traffic between two processes.
+echoserver - a test application that performs echo of any incoming messages.
+
+See the following architecture:
+
+                            ----------------                                 
+ -----------------          |              |          --------------- 
+ | Tunnel Client |----------|  TCP Relay   |----------| Echo Server | 
+ -----------------          |              |          --------------- 
+                            ----------------                                
+Features:
+
+1. Supports any tcp application layer protocol (echo server can be easily replaced by any other process, e.g. http server, ftp server, etc)
+2. Allows multiple tunnel clients. Each client can communicate with echo server at the same time.
+3. Supports multiple echo servers. Each echo server has its own individual socket at the relay.
+4. Checks if echo server is alive when the new client is connected to relay.
+5. Aggregates network statistics (# of bytes) over each connected client.
+
+BUILD
+
+$ cd relay
+$ go get github.com/strizhov/tcp-relay
+$ go get github.com/hashicorp/yamux
+$ go build
+$ cd ../echoserver/
+$ go build
+
+USAGE
+
+Start relay process
+
+$ cd relay
+$ ./relay <port number> & 
+
+Start echoserver process
+
+$ cd echoserver
+$ ./echoserver <relay host> <relay port>
+
+After successful connection to relay, the echoserver will print out the tunnel host and port (assigned by relay)
+
+Test your relay:
+
+$ telnet <tunnel host> <tunnel port>
+
+Type any message and hit enter. You should get back the echo of your message.
+
+MISC:
+
+1. By default tcp relay listens 127.0.0.1, feel free to modify host variable in relay source code.
+2. TCP relay routes 4096 byte packets, if your application uses larger buffer size, feel free to adjust this variable in relay source code.
+
+AUTHORS
+
+Mikhail Strizhov (mikhailstrizhov@gmail.com)
